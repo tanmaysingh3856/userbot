@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # CatUserbot
 A simple Telegram userbot based on Telethon .
 ![catuserbot logo](https://telegra.ph/file/4860c8e1a5a56d0616b79.png)
@@ -60,6 +61,9 @@ Thanks for using our bot 😺
    - Special thanks to [LonamiWebs](https://github.com/LonamiWebs/Telethon/) for Telethon library.
    - To all devs of these [Userbots](https://github.com/TgCatUB/catuserbot/tree/bugs#inspiration)
    - Finally to all [contributors of Catuserbot](https://github.com/TgCatUB/catuserbot/graphs/contributors)
+=======
+# userbot
+>>>>>>> dc5983bd9775a640379376205e3ee5889067f972
 =======
 # userbot
 >>>>>>> dc5983bd9775a640379376205e3ee5889067f972
