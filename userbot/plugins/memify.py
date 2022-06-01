@@ -1,7 +1,6 @@
 # Made by @assonfused and @pussy1709
 # memify plugin for catuserbot
 import asyncio
-import base64
 import io
 import os
 import random

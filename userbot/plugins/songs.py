@@ -2,7 +2,6 @@
 
 # songs finder for catuserbot
 import asyncio
-import base64
 import io
 import os
 from pathlib import Path
