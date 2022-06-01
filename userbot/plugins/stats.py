@@ -1,4 +1,3 @@
-import base64
 import time
 
 from telethon.tl.custom import Dialog

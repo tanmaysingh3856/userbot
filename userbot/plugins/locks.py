@@ -1,5 +1,3 @@
-import base64
-
 from telethon import events, functions, types
 from telethon.tl.functions.channels import EditBannedRequest
 from telethon.tl.functions.messages import EditChatDefaultBannedRightsRequest
