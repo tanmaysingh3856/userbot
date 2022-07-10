@@ -1,12 +1,11 @@
 # Random RGB Sticklet by @PhycoNinja13b
 # modified by @UniBorg
 # imported from ppe-remix by @heyworld & @DeletedUser420
-# modified by @assonfused
+# modified by @mrconfused
 # pengin & gandhi Yato
-# modified & improved by @jimsan7509
+# modified & improved by @jisan7509
 # RegEx by https://t.me/c/1220993104/500653 ( @SnapDragon7410 )
 
-# RegEx by https://t.me/c/1220993104/500653 ( @SnapDragon7410 )
 import io
 import os
 import random

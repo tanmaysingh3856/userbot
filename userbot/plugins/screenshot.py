@@ -1,7 +1,7 @@
 """
 `Credits` @amnd33p
 from ..helpers.utils import _format
-Modified by @assonfused
+Modified by @mrconfused
 """
 
 import io

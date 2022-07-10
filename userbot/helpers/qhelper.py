@@ -36,6 +36,7 @@ COLORS = [
     "#E181AC",
 ]
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 

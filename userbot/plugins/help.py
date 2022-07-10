@@ -101,7 +101,9 @@ async def plugininfo(input_str, event, flag):
 async def grpinfo():
     outstr = "**Plugins in Catuserbot are:**\n\n"
     outstr += f"**👩‍💻 Usage : ** `{cmdprefix}help <plugin name>`\n\n"
-    category = ["admin", "bot", "fun", "misc", "tools", "utils", "extra", "useless"]
+    category = ["admin", "bot", "fun", "misc", "tools", "utils", "extra"]
+    if BADCAT:
+        category.append("useless")
     for cat in category:
         plugins = GRP_INFO[cat]
         outstr += f"**{hemojis[cat]} {cat.title()} **({len(plugins)})\n"
@@ -114,6 +116,8 @@ async def grpinfo():
 async def cmdlist():
     outstr = "**Total list of Commands in your Catuserbot are :**\n\n"
     category = ["admin", "bot", "fun", "misc", "tools", "utils", "extra"]
+    if BADCAT:
+        category.append("useless")
     for cat in category:
         plugins = GRP_INFO[cat]
         outstr += f"**{hemojis[cat]} {cat.title()} ** - {len(plugins)}\n\n"
@@ -133,7 +137,7 @@ async def cmdlist():
     info={
         "header": "To get guide for catuserbot.",
         "description": "To get information or guide for the command or plugin",
-        "note": "if command name and plugin name is same then you get guide for plugin. So by using this flag you get command guide\nAdd HELP_PIC in database for image in `{tr}help`",
+        "note": "if command name and plugin name is same then you get guide for plugin. So by using this flag you get command guide",
         "flags": {
             "c": "To get info of command.",
             "p": "To get info of plugin.",

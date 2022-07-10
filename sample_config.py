@@ -19,7 +19,7 @@ class Config(object):
     API_HASH = os.environ.get("API_HASH") or None
     # Datbase url heroku sets it automatically else get this from elephantsql
     DB_URI = os.environ.get("DATABASE_URL", None)
-    # Get this value by running python3 stringsetup.py or https://repl.it/@pusseep1709/generatestringsession
+    # Get this value by running python3 stringsetup.py or https://repl.it/@sandeep1709/generatestringsession
     STRING_SESSION = os.environ.get("STRING_SESSION", None)
     # Telegram BOT Token and bot username from @BotFather
     TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN") or os.environ.get(
@@ -29,7 +29,9 @@ class Config(object):
     # get this value from http://www.timezoneconverter.com/cgi-bin/findzone.tzc
     TZ = os.environ.get("TZ", "Asia/Kolkata")
     # set this with required cat repo link
-    UPSTREAM_REPO = os.environ.get("UPSTREAM_REPO", "https://github.com/i-osho/catub")
+    UPSTREAM_REPO = os.environ.get(
+        "UPSTREAM_REPO", "https://github.com/TgCatUB/catuserbot"
+    )
     # External plugins repo
     EXTERNAL_REPO = os.environ.get("EXTERNAL_REPO", None)
     if EXTERNAL_REPO and (EXTERNAL_REPO.lower() != "no") and not url(EXTERNAL_REPO):

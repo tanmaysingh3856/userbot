@@ -72,6 +72,7 @@ async def labstack(event):
         "Up-User-ID: IZfFbjUcgoo3Ao3m",
         url,
     ]
+
     try:
         t_response = subprocess.check_output(command_to_exec, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:

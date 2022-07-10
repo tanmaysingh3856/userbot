@@ -490,6 +490,7 @@ async def on_plug_in_callback_query_handler(event):
         return await event.answer(text, cache_time=0, alert=True)
     text = f"""Ok, Now you are accessing the availabe menu of my master, {mention}.
 __Let's make this smooth and let me know why you are here.__
+
 **Choose one of the following reasons why you are here:**"""
     buttons = [
         (Button.inline(text="To enquire something.", data="to_enquire_something"),),
@@ -542,6 +543,7 @@ async def on_plug_in_callback_query_handler(event):
         return await event.answer(text, cache_time=0, alert=True)
     text = """__Okay. I have notified my master about this. When he/she comes comes online\
  or when my master is free he/she will look into this chat and will ping you so we can have a friendly chat.__\
+
 **But right now please do not spam unless you wish to get blocked.**"""
     sqllist.add_to_list("pmrequest", event.query.user_id)
     try:

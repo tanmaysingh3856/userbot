@@ -1052,6 +1052,7 @@ class googleimagesdownload:
                     download_message = (
                         "OSError on an image...trying next one..." + " Error: " + str(e)
                     )
+
                 except IOError as e:
                     download_status = "fail"
                     download_message = (
@@ -1096,6 +1097,7 @@ class googleimagesdownload:
             download_message = (
                 "IOError on an image...trying next one..." + " Error: " + str(e)
             )
+
         return download_status, download_message
 
     # Download Images

@@ -86,7 +86,7 @@ async def bot_start(event):
     my_last = user.last_name
     my_fullname = f"{my_first} {my_last}" if my_last else my_first
     my_username = f"@{user.username}" if user.username else my_mention
-    START_PIC = gvarstatus("START_PIC")
+    custompic = gvarstatus("BOT_START_PIC") or None
     if chat.id != Config.OWNER_ID:
         customstrmsg = gvarstatus("START_TEXT") or None
         if customstrmsg is not None:
@@ -106,22 +106,30 @@ async def bot_start(event):
         else:
             start_msg = f"Hey! 👤{mention},\
                         \nI am {my_mention}'s assistant bot.\
-                        \nYou can contact to my master from here."
-        buttons = None
+                        \nYou can contact to my master from here.\
+                        \n\nPowered by [Catuserbot](https://t.me/catuserbot)"
+        buttons = [
+            (
+                Button.url("Repo", "https://github.com/TgCatUB/catuserbot"),
+                Button.url(
+                    "Deploy",
+                    "https://github.com/TgCatUB/nekopack",
+                ),
+            )
+        ]
     else:
         start_msg = "Hey Master!\
             \nHow can i help you ?"
         buttons = None
     try:
-        if START_PIC:
+        if custompic:
             await event.client.send_file(
                 chat.id,
-                file=START_PIC,
+                file=custompic,
                 caption=start_msg,
                 link_preview=False,
                 buttons=buttons,
                 reply_to=reply_to,
-                allow_cache=True,
             )
         else:
             await event.client.send_message(

@@ -1,6 +1,6 @@
 """
 designed By @Krishna_Singhal in userge
-ported to telethon by @assonfused and @pussy1709
+ported to telethon by @mrconfused and @sandy1709
 """
 
 import os

@@ -52,6 +52,7 @@ async def _(event):
         data=data,
         auth=("apikey", Config.IBM_WATSON_CRED_PASSWORD),
     )
+
     r = response.json()
     if "results" not in r:
         return await catevent.edit(r["error"])

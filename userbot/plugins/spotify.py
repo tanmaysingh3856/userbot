@@ -24,12 +24,11 @@ import lyricsgenius
 import requests
 import ujson
 from PIL import Image, ImageEnhance, ImageFilter
+from telegraph import Telegraph
 from telethon import events
 from telethon.errors import AboutTooLongError, FloodWaitError
-from telethon.errors.rpcerrorlist import YouBlockedUserError
 from telethon.tl.custom import Button
 from telethon.tl.functions.account import UpdateProfileRequest
-from telethon.tl.functions.contacts import UnblockRequest as unblock
 from telethon.tl.functions.users import GetFullUserRequest
 from validators.url import url
 
@@ -43,13 +42,11 @@ from ..helpers.functions.functions import (
     make_inline,
     text_draw,
 )
-from ..helpers.tools import post_to_telegraph
 from ..sql_helper import global_collectionjson as glob_db
-from ..sql_helper.globals import gvarstatus
 from . import BOTLOG, BOTLOG_CHATID, Config, catub, reply_id
 
-SPOTIFY_CLIENT_ID = gvarstatus("S_ID")
-SPOTIFY_CLIENT_SECRET = gvarstatus("S_S")
+SPOTIFY_CLIENT_ID = Config.SPOTIFY_CLIENT_ID
+SPOTIFY_CLIENT_SECRET = Config.SPOTIFY_CLIENT_SECRET
 
 
 LOGS = logging.getLogger(__name__)
@@ -81,6 +78,8 @@ OFFSET = 1
 # reduce the OFFSET from our actual 70 character limit
 LIMIT = 70 - OFFSET
 # [----------------------------------------------------------------------]
+# Errors
+no_sp_vars = "Vars `SPOTIFY_CLIENT_ID` & `SPOTIFY_CLIENT_SECRET` are missing, add them first !\n\n[Follow this tutorial](https://telegra.ph/Steps-of-setting-Spotify-Vars-in-Catuserbot-04-24-2)"
 
 
 class Database:
@@ -170,6 +169,8 @@ async def spotify_setup(event):
             "For authencation you need to set `PRIVATE_GROUP_BOT_API_ID` in heroku",
             7,
         )
+    if not (SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET):
+        return await edit_delete(event, no_sp_vars, 10)
     if event.chat_id != BOTLOG_CHATID:
         return await edit_delete(
             event, "CHAT INVALID :: Do this in your Log Channel", 7
@@ -492,6 +493,14 @@ if SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET:
 
 
 async def sp_var_check(event):
+    if not (SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET):
+        await event.edit(no_sp_vars)
+        return False
+    if (SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET) and SP_DATABASE is None:
+        await event.edit(
+            "ERROR :: No Database was found!\n**Do `.help spsetup` for more info.**\n\n[Follow this tutorial](https://telegra.ph/Steps-of-setting-Spotify-Vars-in-Catuserbot-04-24-2)"
+        )
+        return False
     return True
 
 
@@ -525,45 +534,40 @@ async def spotifybio(event):
         await spotify_bio()
 
 
-def title_fetch(title):
-    pattern = re.compile(r"([^(-]+) [(-].*")
-    if "-E-" in title or "- E -" in title:
-        pattern = re.compile(
-            r"([a-zA-Z0-9]+(?: ?[a-zA-Z0-9]+)+(?: - \w - \w+)?(?:-\w-\w+)?).*"
-        )
-    regx = pattern.search(title)
-    if regx:
-        return regx.group(1)
-    return title
-
-
-async def telegraph_lyrics(tittle, artist, title_img):
+def telegraph_lyrics(tittle, artist):
+    telegraph = Telegraph()
+    telegraph.create_account(short_name=Config.TELEGRAPH_SHORT_NAME)
     GENIUS = Config.GENIUS_API_TOKEN
     symbol = "❌"
     if GENIUS is None:
-        result = "<h1>Set GENIUS_API_TOKEN in heroku vars for functioning of this command.<br>‌‌‎ <br>Check out this <a href = https://telegra.ph/How-to-get-Genius-API-Token-04-26>Tutorial</a></h1>"
+        result = "Set <b>GENIUS_API_TOKEN</b> in heroku vars for functioning of this command.<br><br><b>Check out this <a href = https://telegra.ph/How-to-get-Genius-API-Token-04-26>Tutorial</a></b>"
     else:
         genius = lyricsgenius.Genius(GENIUS)
         try:
             songs = genius.search_song(tittle, artist)
             content = songs.lyrics
-            content = (
-                content.replace("\n", "<br>")
-                .replace("<br><br>", "<br>‌‌‎ <br>")
-                .replace("[", "<b>[")
-                .replace("]", "]</b>")
-            )
-            result = f"<img src='{title_img}'/><h4>{tittle}</h4><br><b>by {artist}</b><br>‌‌‎ <br>{content}"
-            symbol = "𝄞"
+            content = content.replace("\n", "<br>")
+            result = f"<h3>{tittle}</h3><br><b>by {artist}</b><br><br>{content}"
+            symbol = "📜"
         except (TypeError, AttributeError):
-            result = "<h4>Lyrics Not found!</h4>"
+            result = "<b>Lyrics Not found!</b>"
             symbol = "❌"
     try:
-        response = await post_to_telegraph("Lyrics", result)
+        response = telegraph.create_page(
+            "Lyrics",
+            html_content=result,
+            author_name="CatUserbot",
+            author_url="https://t.me/catuserbot17",
+        )
     except Exception as e:
         symbol = "❌"
-        response = await post_to_telegraph("Lyrics", f"<h4>{e}</h4>")
-    return response, symbol
+        response = telegraph.create_page(
+            "Lyrics",
+            html_content=str(e),
+            author_name="CatUserbot",
+            author_url="https://t.me/catuserbot17",
+        )
+    return response["url"], symbol
 
 
 def file_check():
@@ -617,8 +621,7 @@ def sp_data(API):
                 }
             },
         )
-        oauth2 = {"Authorization": "Bearer " + SP_DATABASE.return_token()}
-        spdata = requests.get(API, headers=oauth2)
+        spdata = requests.get(API, headers=oauth)
     return spdata
 
 
@@ -682,32 +685,40 @@ async def spotify_now(event):
         return await edit_delete(
             catevent, "\n**I'm not listening anything right now  ;)**"
         )
-    if SP_DATABASE.SPOTIFY_MODE:
-        info = f"🎶 Vibing ; [{spotify_bio.title}]({spotify_bio.link}) - {spotify_bio.interpret}"
-        return await edit_or_reply(event, info, link_preview=True)
-    dic = {}
-    received = r.json()
-    if received["currently_playing_type"] == "track":
-        dic["title"] = received["item"]["name"]
-        dic["progress"] = ms_converter(received["progress_ms"])
-        dic["interpret"] = received["item"]["artists"][0]["name"]
-        dic["duration"] = ms_converter(received["item"]["duration_ms"])
-        dic["link"] = received["item"]["external_urls"]["spotify"]
-        dic["image"] = received["item"]["album"]["images"][1]["url"]
-        tittle = title_fetch(dic["title"])
-        thumb = await make_thumb(
-            dic["image"],
-            catub,
-            tittle,
-            dic["interpret"],
-            dic["progress"],
-            dic["duration"],
+    try:
+        if SP_DATABASE.SPOTIFY_MODE:
+            info = f"🎶 Vibing ; [{spotify_bio.title}]({spotify_bio.link}) - {spotify_bio.interpret}"
+            return await edit_or_reply(event, info, link_preview=True)
+        dic = {}
+        received = r.json()
+        if received["currently_playing_type"] == "track":
+            dic["title"] = received["item"]["name"]
+            dic["progress"] = ms_converter(received["progress_ms"])
+            dic["interpret"] = received["item"]["artists"][0]["name"]
+            dic["duration"] = ms_converter(received["item"]["duration_ms"])
+            dic["link"] = received["item"]["external_urls"]["spotify"]
+            dic["image"] = received["item"]["album"]["images"][1]["url"]
+            tittle = dic["title"]
+            regx = re.search(r"([^(-]+) [(-].*", tittle)
+            if regx:
+                tittle = regx.group(1)
+            thumb = await make_thumb(
+                dic["image"],
+                catub,
+                tittle,
+                dic["interpret"],
+                dic["progress"],
+                dic["duration"],
+            )
+            lyrics, symbol = telegraph_lyrics(tittle, dic["interpret"])
+            await catevent.delete()
+        button_format = f'**🎶 Track :- ** `{tittle}`\n**🎤 Artist :- ** `{dic["interpret"]}` <media:{thumb}> [🎧 Spotify]<buttonurl:{dic["link"]}>[{symbol} Lyrics]<buttonurl:{lyrics}:same>'
+        await make_inline(button_format, event.client, event.chat_id, msg_id)
+        os.remove(thumb)
+    except KeyError:
+        await edit_delete(
+            catevent, "\n**Strange!! Try after restaring Spotify once ;)**", 7
         )
-        lyrics, symbol = await telegraph_lyrics(tittle, dic["interpret"], dic["image"])
-        await catevent.delete()
-    button_format = f'**🎶 Track :- ** `{tittle}`\n**🎤 Artist :- ** `{dic["interpret"]}` <media:{thumb}> [🎧 Spotify]<buttonurl:{dic["link"]}>[{symbol} Lyrics]<buttonurl:{lyrics}:same>'
-    await make_inline(button_format, event.client, event.chat_id, msg_id)
-    os.remove(thumb)
 
 
 @catub.cat_cmd(
@@ -764,8 +775,11 @@ async def spotify_now(event):
         song = "__**Spotify last played songs :-**__\n\n"
         songs = x.json()
         for i in songs["items"]:
-            title = title_fetch(i["track"]["name"])
-            song += f"**◉ [{title} - {i['track']['artists'][0]['name']}]({i['track']['external_urls']['spotify']})**\n"
+            tittle = i["track"]["name"]
+            regx = re.search(r"([^(-]+) [(-].*", tittle)
+            if regx:
+                tittle = regx.group(1)
+            song += f"**◉ [{tittle} - {i['track']['artists'][0]['name']}]({i['track']['external_urls']['spotify']})**\n"
     await edit_or_reply(event, song)
 
 
@@ -775,10 +789,6 @@ async def spotify_now(event):
     info={
         "header": "To get song from spotify",
         "description": "Send the currently playing song of spotify or song from a spotify link.",
-        "usage": [
-            "{tr}now",
-            "{tr}now <Spotify/Deezer link>",
-        ],
         "flags": {
             "i": "To send song song link as button",
         },
@@ -798,18 +808,10 @@ async def spotify_now(event):
     link = event.pattern_match.group(2)
     catevent = await edit_or_reply(event, "🎶 `Fetching...`")
     if link:
+        cap = f"<b>Spotify :- <a href = {link}>Link</a></b>"
         if not url(link) and "spotify" not in link:
             return await edit_delete(catevent, "**Give me a correct link...**")
-        idrgx = re.search(r"(?:/track/)((?:\w|-){22})", link)
-        if not idrgx:
-            return await edit_delete(catevent, "\n**Error!! Invalid spotify url ;)**")
-        song_id = idrgx.group(1)
-        received = sp_data(f"https://api.spotify.com/v1/tracks/{song_id}").json()
-        title = received["album"]["name"]
-        artist = received["album"]["artists"][0]["name"]
-        thumb = received["album"]["images"][1]["url"]
-        link = f"https://open.spotify.com/track/{song_id}"
-    else:
+    elif not link:
         if not await sp_var_check(event):
             return
         r = sp_data("https://api.spotify.com/v1/me/player/currently-playing")
@@ -817,12 +819,16 @@ async def spotify_now(event):
             return await edit_delete(
                 catevent, "\n**I'm not listening anything right now  ;)**"
             )
-        received = r.json()
-        if received["currently_playing_type"] == "track":
-            title = received["item"]["name"]
-            link = received["item"]["external_urls"]["spotify"]
-            artist = received["item"]["artists"][0]["name"]
-            thumb = received["item"]["album"]["images"][1]["url"]
+        try:
+            received = r.json()
+            if received["currently_playing_type"] == "track":
+                title = received["item"]["name"]
+                link = received["item"]["external_urls"]["spotify"]
+                cap = f"<b>Spotify :- <a href = {link}>{title}</a></b>"
+        except KeyError:
+            return await edit_delete(
+                catevent, "\n**Strange!! Try after restaring Spotify once ;)**"
+            )
     async with event.client.conversation(chat) as conv:
         try:
             purgeflag = await conv.send_message("/start")
@@ -836,17 +842,10 @@ async def spotify_now(event):
         await event.client.send_read_acknowledge(conv.chat_id)
         await catevent.delete()
         if cmd == "i":
-            title = title_fetch(title)
-            lyrics, symbol = await telegraph_lyrics(title, artist, thumb)
             songg = await catub.send_file(BOTLOG_CHATID, song)
             fetch_songg = await catub.tgbot.get_messages(BOTLOG_CHATID, ids=songg.id)
             btn_song = await catub.tgbot.send_file(
-                BOTLOG_CHATID,
-                fetch_songg,
-                buttons=[
-                    Button.url("🎧 Spotify", link),
-                    Button.url(f"{symbol} Lyrics", lyrics),
-                ],
+                BOTLOG_CHATID, fetch_songg, buttons=Button.url("🎧 Spotify", link)
             )
             fetch_btn_song = await catub.get_messages(BOTLOG_CHATID, ids=btn_song.id)
             await event.client.forward_messages(event.chat_id, fetch_btn_song)
@@ -856,7 +855,7 @@ async def spotify_now(event):
             await event.client.send_file(
                 event.chat_id,
                 song,
-                caption=f"<b>Spotify :- <a href = {link}>{title}</a></b>",
+                caption=cap,
                 parse_mode="html",
                 reply_to=msg_id,
             )

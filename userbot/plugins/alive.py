@@ -23,7 +23,6 @@ from ..sql_helper.globals import gvarstatus
 from . import mention
 
 plugin_category = "utils"
-sucks = "The stars sure are beautiful tonight | Am I frightening... woman? "  # dis is str for a reason
 
 
 @catub.cat_cmd(
@@ -40,30 +39,23 @@ sucks = "The stars sure are beautiful tonight | Am I frightening... woman? "  # 
 async def amireallyalive(event):
     "A kind of showing bot details"
     reply_to_id = await reply_id(event)
+    ANIME = None
+    cat_caption = gvarstatus("ALIVE_TEMPLATE") or temp
+    if "ANIME" in cat_caption:
+        data = requests.get("https://animechan.vercel.app/api/random").json()
+        ANIME = f"**“{data['quote']}” - {data['character']} ({data['anime']})**"
     uptime = await get_readable_time((time.time() - StartTime))
     start = datetime.now()
     catevent = await edit_or_reply(event, "`Checking...`")
     end = datetime.now()
     ms = (end - start).microseconds / 1000
     _, check_sgnirts = check_data_base_heal_th()
-    EMOJI = gvarstatus("ALIVE_EMOJI") or "〣"
-    # ================================================
-    api_url = f"https://animechan.vercel.app/api/random"
-    try:
-        response = requests.get(api_url).json()
-    except Exception:
-        response = None
-    quote = response["quote"]
-    while (len(quote) > 150) and (quote not in sucks):
-        res = requests.get(api_url).json()
-        quote = res["quote"]
-    ANIME_QUOTE = f"__{quote}__"
-    # ================================================
-    ALIVE_TEXT = gvarstatus("ALIVE_TEXT") or ANIME_QUOTE
+    EMOJI = gvarstatus("ALIVE_EMOJI") or "  ✥ "
+    ALIVE_TEXT = gvarstatus("ALIVE_TEXT") or "**✮ MY BOT IS RUNNING SUCCESSFULLY ✮**"
     CAT_IMG = gvarstatus("ALIVE_PIC")
-    cat_caption = gvarstatus("ALIVE_TEMPLATE") or temp
     caption = cat_caption.format(
         ALIVE_TEXT=ALIVE_TEXT,
+        ANIME=ANIME,
         EMOJI=EMOJI,
         mention=mention,
         uptime=uptime,
@@ -74,7 +66,7 @@ async def amireallyalive(event):
         ping=ms,
     )
     if CAT_IMG:
-        CAT = [x for x in CAT_IMG.split()]
+        CAT = list(CAT_IMG.split())
         PIC = random.choice(CAT)
         try:
             await event.client.send_file(
@@ -94,12 +86,12 @@ async def amireallyalive(event):
 
 
 temp = """{ALIVE_TEXT}
-**{EMOJI} Master:** {mention}
-**{EMOJI} Uptime :** `{uptime}`
+**{EMOJI} Database :** `{dbhealth}`
 **{EMOJI} Telethon Version :** `{telever}`
 **{EMOJI} Catuserbot Version :** `{catver}`
 **{EMOJI} Python Version :** `{pyver}`
-**{EMOJI} Database :** `{dbhealth}`"""
+**{EMOJI} Uptime :** `{uptime}`
+**{EMOJI} Master:** {mention}"""
 
 
 @catub.cat_cmd(
@@ -116,8 +108,7 @@ temp = """{ALIVE_TEXT}
 async def amireallyalive(event):
     "A kind of showing bot details by your inline bot"
     reply_to_id = await reply_id(event)
-    EMOJI = gvarstatus("ALIVE_EMOJI") or "✧✧"
-
+    EMOJI = gvarstatus("ALIVE_EMOJI") or "  ✥ "
     cat_caption = "**Catuserbot is Up and Running**\n"
     cat_caption += f"**{EMOJI} Telethon version :** `{version.__version__}\n`"
     cat_caption += f"**{EMOJI} Catuserbot Version :** `{catversion}`\n"

