@@ -4,6 +4,7 @@ apscheduler
 cairosvg
 cloudscraper
 colour
+pytgcalls 
 covid
 cowpy
 dataclasses
